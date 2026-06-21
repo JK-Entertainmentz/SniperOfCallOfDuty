@@ -119,8 +119,8 @@
             <div class="p-4 border-b border-gray-800 font-bold neon-text flex items-center gap-2"><i class="fa-solid fa-crosshairs"></i> SNIPER CLAN</div>
             <div class="p-2 flex-1 overflow-y-auto custom-scrollbar">
                 <div class="text-xs text-gray-500 uppercase font-bold mb-2 mt-2 px-2">Rooms</div>
-                <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 mb-1" onclick="loadChat('general')"><i class="fa-solid fa-hashtag text-gray-500"></i> General</div>
-                <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2" onclick="loadChat('announcements')"><i class="fa-solid fa-bullhorn text-gray-500"></i> Announcements</div>
+                <div id="room-general" class="room-item p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 mb-1 border-l-4 border-transparent transition-all" onclick="loadChat('general')"><i class="fa-solid fa-hashtag text-gray-500"></i> General</div>
+                <div id="room-announcements" class="room-item p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 border-l-4 border-transparent transition-all" onclick="loadChat('announcements')"><i class="fa-solid fa-bullhorn text-gray-500"></i> Announcements</div>
             </div>
             <div class="p-4 bg-gray-900 border-t border-gray-800 flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-gray-900 font-bold"><i class="fa-solid fa-user"></i></div>
@@ -257,26 +257,31 @@
         function logout() {
             sessionStorage.removeItem('user');
             currentUser = null;
-            clearInterval(chatInterval);
+            if(chatInterval) clearInterval(chatInterval);
             document.getElementById('main-view').classList.add('hidden');
             document.getElementById('auth-container').classList.remove('hidden');
             toggleAuthForm('login');
         }
 
         function switchTab(tab) {
+            // ซ่อนทุกหน้า
             ['dashboard', 'chat', 'rules'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
                 document.getElementById(`nav-${t}`).classList.remove('active');
             });
+            // แสดงหน้าที่เลือก
             document.getElementById(`view-${tab}`).classList.remove('hidden');
             document.getElementById(`nav-${tab}`).classList.add('active');
-            clearInterval(chatInterval);
+            
+            // เคลียร์ Timer ของแชทเสมอเมื่อออกจากหน้าแชท
+            if(chatInterval) clearInterval(chatInterval);
 
             if (tab === 'dashboard') {
                 document.getElementById('content-title').innerText = 'Dashboard';
                 loadDashboardStats();
             } else if (tab === 'chat') {
-                loadChat('general');
+                // จำห้องล่าสุดที่เคยเข้าไว้
+                loadChat(currentRoom, true);
             } else if (tab === 'rules') {
                 document.getElementById('content-title').innerText = 'Clan Rules';
                 loadRules();
@@ -291,10 +296,33 @@
             }
         }
 
-        async function loadChat(room) {
+        async function loadChat(room, forceLoad = false) {
+            // ป้องกันการโหลดซ้ำหากผู้ใช้กดห้องเดิมซ้ำๆ
+            if (!forceLoad && currentRoom === room && !document.getElementById('view-chat').classList.contains('hidden')) return;
+            
             currentRoom = room;
             document.getElementById('content-title').innerText = `Room: #${room}`;
-            fetchMessages();
+            
+            // 1. เคลียร์ Timer ทันทีเพื่อป้องกัน API สแปมซ้อนทับกัน
+            if (chatInterval) clearInterval(chatInterval);
+            
+            // 2. ล้างหน้าจอแชทเก่า และใส่ Loading UI
+            const box = document.getElementById('chat-messages');
+            box.innerHTML = '<div class="flex justify-center items-center h-full text-cyan-400"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>';
+
+            // 3. จัดการ Active State แถบสีด้านซ้ายให้รู้ว่าอยู่ห้องไหน
+            document.querySelectorAll('.room-item').forEach(el => {
+                el.classList.remove('bg-gray-700', 'border-cyan-500');
+                el.classList.add('border-transparent');
+            });
+            const activeRoom = document.getElementById(`room-${room}`);
+            if(activeRoom) {
+                activeRoom.classList.remove('border-transparent');
+                activeRoom.classList.add('bg-gray-700', 'border-cyan-500');
+            }
+
+            // 4. ดึงข้อมูลใหม่ และเริ่ม Timer ใหม่
+            await fetchMessages();
             chatInterval = setInterval(fetchMessages, 2000);
         }
 
@@ -303,28 +331,33 @@
             if (res.success) {
                 const box = document.getElementById('chat-messages');
                 const wasAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 50;
-                box.innerHTML = ''; 
                 
-                res.messages.forEach(msg => {
-                    const time = new Date(msg.timestamp).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-                    const isMe = msg.sender === currentUser.username;
-                    const isAdmin = ['Admin', 'Clan Leader'].includes(currentUser.role);
-                    
-                    const html = `
-                        <div class="flex gap-3 hover:bg-gray-800 p-2 rounded transition group">
-                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-cyan-400 font-bold shrink-0"><i class="fa-solid fa-user"></i></div>
-                            <div class="flex-1">
-                                <div class="flex items-baseline gap-2">
-                                    <span class="font-bold ${isMe ? 'text-cyan-400' : 'text-gray-300'}">${msg.sender}</span>
-                                    <span class="text-xs text-gray-500">${time}</span>
+                let newHtml = '';
+                if(res.messages.length === 0) {
+                    newHtml = '<div class="text-center text-gray-500 mt-10">ยังไม่มีข้อความในห้องนี้ เริ่มทักทายกันเลย!</div>';
+                } else {
+                    res.messages.forEach(msg => {
+                        const time = new Date(msg.timestamp).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+                        const isMe = msg.sender === currentUser.username;
+                        const isAdmin = ['Admin', 'Clan Leader'].includes(currentUser.role);
+                        
+                        newHtml += `
+                            <div class="flex gap-3 hover:bg-gray-800 p-2 rounded transition group">
+                                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-cyan-400 font-bold shrink-0"><i class="fa-solid fa-user"></i></div>
+                                <div class="flex-1">
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="font-bold ${isMe ? 'text-cyan-400' : 'text-gray-300'}">${msg.sender}</span>
+                                        <span class="text-xs text-gray-500">${time}</span>
+                                    </div>
+                                    <div class="text-gray-200 mt-1">${msg.message}</div>
                                 </div>
-                                <div class="text-gray-200 mt-1">${msg.message}</div>
+                                ${isAdmin ? `<button onclick="deleteMessage('${msg.id}')" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition px-2"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                             </div>
-                            ${isAdmin ? `<button onclick="deleteMessage('${msg.id}')" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition px-2"><i class="fa-solid fa-trash-can"></i></button>` : ''}
-                        </div>
-                    `;
-                    box.insertAdjacentHTML('beforeend', html);
-                });
+                        `;
+                    });
+                }
+                
+                box.innerHTML = newHtml;
                 if (wasAtBottom) box.scrollTop = box.scrollHeight;
             }
         }
