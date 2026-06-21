@@ -2,420 +2,744 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sniper Clan - CODM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sniper Clan WebApp</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-dark: #0b1120;
-            --glass-bg: rgba(15, 23, 42, 0.7);
-            --glass-border: rgba(56, 189, 248, 0.2);
-            --neon-blue: #38bdf8;
+            --bg-dark: #090d16;
+            --bg-panel: rgba(13, 22, 41, 0.75);
+            --border-neon: rgba(56, 189, 248, 0.25);
+            --neon-color: #38bdf8;
         }
 
         body {
             background-color: var(--bg-dark);
-            color: #e2e8f0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        /* เอฟเฟกต์กระจกเบลอ Glassmorphism สไตล์เกมมิ่ง */
+        .glass {
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-neon);
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
         }
 
         .neon-text {
-            color: var(--neon-blue);
-            text-shadow: 0 0 5px var(--neon-blue), 0 0 10px rgba(56, 189, 248, 0.5);
+            color: var(--neon-color);
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 3px; }
+        /* แถบเลื่อนดีไซน์โมเดิร์นขนาดเล็ก */
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--neon-color); border-radius: 99px; }
 
-        .sidebar-icon:hover, .sidebar-icon.active {
-            border-radius: 30%;
-            background-color: var(--neon-blue);
-            color: var(--bg-dark);
-            transition: all 0.3s ease;
+        .sidebar-btn:hover, .sidebar-btn.active {
+            border-radius: 35%;
+            background-color: var(--neon-color);
+            color: #090d16;
+            transform: scale(1.05);
+        }
+        
+        .sidebar-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        @media (max-width: 768px) {
-            .mobile-hide { display: none !important; }
-            .mobile-content { margin-left: 5rem; width: calc(100% - 5rem); }
+        /* ตั้งค่าสถานะซ่อนฟังก์ชันสำหรับจัดการหน้าจอโทรศัพท์มือถือ */
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none !important; }
+            .content-wrapper { margin-left: 5rem; width: calc(100% - 5rem); }
         }
     </style>
 
     <script>
-        // !! เปลี่ยน URL ด้านล่างเป็นของคุณ !!
+        // บังคับเปลี่ยน URL เป็นสคริปต์ Google Web App ของคุณเองที่นี่เพื่อรันฐานข้อมูลชีตแบบสมบูรณ์
         const API_URL = 'https://script.google.com/macros/s/AKfycbx4pnpHdHXpRxc9VAcXslZoUX_6Bw3XZOFuup5ZaEVFBPWrm3qKfSmsBXIU68c0P6qg/exec';
-        const LOGO_URL = 'https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg';
+        const DEFAULT_LOGO = 'https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg';
 
-        // PWA Setup
-        const manifestData = {
-            name: "Sniper CODM", short_name: "Sniper", start_url: ".", display: "standalone",
-            background_color: "#0b1120", theme_color: "#38bdf8",
-            icons: [{ src: LOGO_URL, sizes: "512x512", type: "image/jpeg" }]
+        // สร้างสคริปต์ Manifest สำหรับ Progressive Web App (PWA) ให้ทำงานแบบ Standalone ไร้แถบบราวเซอร์กวนใจบนสมาร์ตโฟน
+        const manifest = {
+            name: "Sniper Clan CODM",
+            short_name: "Sniper",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#090d16",
+            theme_color: "#38bdf8",
+            orientation: "portrait",
+            icons: [{ src: DEFAULT_LOGO, sizes: "512x512", type: "image/jpeg" }]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
-        const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(manifestBlob);
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
         document.head.appendChild(link);
 
-        const swCode = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => {});`;
-        const swBlob = new Blob([swCode], { type: 'application/javascript' });
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+        // ลงทะเบียนการทำงานของ Service Worker เพื่อรองรับการเปิดใช้งานบนหน้าจอโฮม
+        const swText = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => {});`;
+        const swBlob = new Blob([swText], { type: 'application/javascript' });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+        }
     </script>
 </head>
-<body class="h-screen w-screen flex items-center justify-center">
+<body class="h-screen w-screen flex items-center justify-center p-0 m-0 select-none">
 
-    <div id="toast" class="fixed top-5 right-5 p-4 rounded glass-panel hidden z-50 transition-opacity"></div>
+    <div id="toast-box" class="fixed top-6 right-6 p-4 rounded-xl glass neon-glow hidden z-50 transition-all duration-300 transform translate-y-0 text-sm font-semibold flex items-center gap-3"></div>
 
-    <div id="auth-container" class="w-full max-w-md p-8 glass-panel rounded-2xl flex flex-col items-center">
-        <img src="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg" class="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-[0_0_15px_#38bdf8] mb-6">
-        <h1 class="text-3xl font-bold neon-text mb-6">SNIPER CLAN</h1>
+    <div id="auth-panel" class="w-full max-w-md p-8 glass rounded-2xl flex flex-col items-center mx-4 neon-glow z-40">
+        <img id="auth-logo" src="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg" class="w-28 h-28 rounded-full border-4 border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.5)] mb-6 object-cover">
+        <h1 id="auth-title" class="text-3xl font-black neon-text tracking-widest mb-8">SNIPER CLAN</h1>
         
-        <div id="form-login" class="w-full">
-            <input type="text" id="login-user" placeholder="Username" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-gray-700 focus:border-cyan-400 outline-none">
-            <input type="password" id="login-pass" placeholder="Password" class="w-full bg-gray-800 text-white p-3 rounded mb-6 border border-gray-700 focus:border-cyan-400 outline-none">
-            <button onclick="handleAuth('login')" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold p-3 rounded transition"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
-            <div class="mt-4 flex justify-between text-sm text-gray-400">
-                <button onclick="toggleAuthForm('register')" class="hover:text-cyan-400"><i class="fa-solid fa-user-plus"></i> Register</button>
-                <button onclick="toggleAuthForm('reset')" class="hover:text-cyan-400"><i class="fa-solid fa-key"></i> Forgot Password?</button>
+        <div id="box-login" class="w-full flex flex-col gap-4">
+            <div class="relative"><i class="fa-solid fa-user absolute left-4 top-4 text-gray-500"></i><input type="text" id="inp-login-user" placeholder="ชื่อผู้ใช้ (Username)" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <div class="relative"><i class="fa-solid fa-lock absolute left-4 top-4 text-gray-500"></i><input type="password" id="inp-login-pass" placeholder="รหัสผ่าน (Password)" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <button onclick="submitAuth('login')" class="w-full bg-sky-500 hover:bg-sky-400 active:scale-95 text-slate-950 font-bold py-3 rounded-lg transition-all duration-200 mt-2 flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบแคลน</button>
+            <div class="flex justify-between text-xs text-sky-400 font-medium mt-3 px-1">
+                <button onclick="switchAuthView('register')" class="hover:underline"><i class="fa-solid fa-user-plus"></i> สมัครสมาชิกใหม่</button>
+                <button onclick="switchAuthView('forgot')" class="hover:underline"><i class="fa-solid fa-circle-question"></i> ลืมรหัสผ่าน?</button>
             </div>
         </div>
 
-        <div id="form-register" class="w-full hidden">
-            <input type="text" id="reg-user" placeholder="New Username" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-gray-700 focus:border-cyan-400 outline-none">
-            <input type="password" id="reg-pass" placeholder="New Password" class="w-full bg-gray-800 text-white p-3 rounded mb-6 border border-gray-700 focus:border-cyan-400 outline-none">
-            <button onclick="handleAuth('register')" class="w-full bg-green-500 hover:bg-green-400 text-gray-900 font-bold p-3 rounded transition"><i class="fa-solid fa-check"></i> Create Account</button>
-            <button onclick="toggleAuthForm('login')" class="mt-4 w-full text-sm text-gray-400 hover:text-cyan-400"><i class="fa-solid fa-arrow-left"></i> Back to Login</button>
+        <div id="box-register" class="w-full flex flex-col gap-4 hidden">
+            <div class="relative"><i class="fa-solid fa-user-plus absolute left-4 top-4 text-gray-500"></i><input type="text" id="inp-reg-user" placeholder="ตั้งชื่อผู้ใช้ใหม่" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <div class="relative"><i class="fa-solid fa-key absolute left-4 top-4 text-gray-500"></i><input type="password" id="inp-reg-pass" placeholder="ตั้งรหัสผ่านความปลอดภัย" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <button onclick="submitAuth('register')" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-lg transition-all duration-200 mt-2 flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-user-check"></i> ส่งข้อมูลสมัครสมาชิก</button>
+            <button onclick="switchAuthView('login')" class="text-xs text-gray-400 hover:text-white text-center mt-3 underline"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปหน้าล็อกอิน</button>
         </div>
 
-        <div id="form-reset" class="w-full hidden">
-            <input type="text" id="res-user" placeholder="Your Username" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-gray-700 focus:border-cyan-400 outline-none">
-            <input type="password" id="res-pass" placeholder="New Password" class="w-full bg-gray-800 text-white p-3 rounded mb-6 border border-gray-700 focus:border-cyan-400 outline-none">
-            <button onclick="handleAuth('reset')" class="w-full bg-orange-500 hover:bg-orange-400 text-gray-900 font-bold p-3 rounded transition"><i class="fa-solid fa-unlock-keyhole"></i> Reset Password</button>
-            <button onclick="toggleAuthForm('login')" class="mt-4 w-full text-sm text-gray-400 hover:text-cyan-400"><i class="fa-solid fa-arrow-left"></i> Back to Login</button>
+        <div id="box-forgot" class="w-full flex flex-col gap-4 hidden">
+            <div class="relative"><i class="fa-solid fa-user absolute left-4 top-4 text-gray-500"></i><input type="text" id="inp-for-user" placeholder="กรอกชื่อผู้ใช้ของคุณ" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <div class="relative"><i class="fa-solid fa-unlock-keyhole absolute left-4 top-4 text-gray-500"></i><input type="password" id="inp-for-pass" placeholder="กรอกรหัสผ่านใหม่ที่ต้องการใช้" class="w-full bg-slate-900/90 text-white pl-12 pr-4 py-3 rounded-lg border border-slate-700 focus:border-sky-400 outline-none transition text-sm"></div>
+            <button onclick="submitAuth('forgot')" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-bold py-3 rounded-lg transition-all duration-200 mt-2 flex items-center justify-center gap-2 text-sm"><i class="fa-solid fa-rotate"></i> กู้คืนและตั้งรหัสผ่านใหม่</button>
+            <button onclick="switchAuthView('login')" class="text-xs text-gray-400 hover:text-white text-center mt-3 underline"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับไปหน้าล็อกอิน</button>
         </div>
     </div>
 
-    <div id="main-view" class="hidden w-full h-full flex">
+    <div id="app-panel" class="hidden w-full h-full flex m-0 p-0 relative">
         
-        <div class="w-20 bg-gray-900 flex flex-col items-center py-4 border-r border-gray-800 h-full z-10 absolute md:relative">
-            <div id="nav-dashboard" class="sidebar-icon active w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white shadow-lg" onclick="switchTab('dashboard')"><i class="fa-solid fa-house"></i></div>
-            <div class="w-10 h-px bg-gray-700 mb-4"></div>
-            <div id="nav-chat" class="sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white" onclick="switchTab('chat')"><i class="fa-solid fa-comments"></i></div>
-            <div id="nav-rules" class="sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white" onclick="switchTab('rules')"><i class="fa-solid fa-scroll"></i></div>
-            <div class="mt-auto sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center cursor-pointer text-xl text-red-500" onclick="logout()"><i class="fa-solid fa-power-off"></i></div>
+        <div class="w-20 bg-slate-950 flex flex-col items-center py-5 border-r border-slate-800 h-full z-30 shrink-0">
+            <div id="btn-nav-dashboard" class="sidebar-btn active w-12 pipe-nav h-12 rounded-[50%] bg-slate-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white shadow-lg" onclick="changeSection('dashboard')"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="w-10 h-px bg-slate-800 mb-4"></div>
+            <div id="btn-nav-chat" class="sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white" onclick="changeSection('chat')"><i class="fa-solid fa-comments"></i></div>
+            <div id="btn-nav-announcements" class="sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white" onclick="changeSection('announcements')"><i class="fa-solid fa-bullhorn"></i></div>
+            <div id="btn-nav-rules" class="sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white" onclick="changeSection('rules')"><i class="fa-solid fa-gavel"></i></div>
+            
+            <div id="btn-nav-admin" class="sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-sky-400 hidden" onclick="changeSection('admin')"><i class="fa-solid fa-shield-halved"></i></div>
+            
+            <div class="mt-auto sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center cursor-pointer text-xl text-rose-500 hover:bg-rose-600 hover:text-white" onclick="processLogout()"><i class="fa-solid fa-power-off"></i></div>
         </div>
 
-        <div class="w-60 glass-panel h-full flex flex-col border-r border-gray-800 mobile-hide md:flex">
-            <div class="p-4 border-b border-gray-800 font-bold neon-text flex items-center gap-2"><i class="fa-solid fa-crosshairs"></i> SNIPER CLAN</div>
-            <div class="p-2 flex-1 overflow-y-auto custom-scrollbar">
-                <div class="text-xs text-gray-500 uppercase font-bold mb-2 mt-2 px-2">Rooms</div>
-                <div id="room-general" class="room-item p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 mb-1 border-l-4 border-transparent transition-all" onclick="loadChat('general')"><i class="fa-solid fa-hashtag text-gray-500"></i> General</div>
-                <div id="room-announcements" class="room-item p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 border-l-4 border-transparent transition-all" onclick="loadChat('announcements')"><i class="fa-solid fa-bullhorn text-gray-500"></i> Announcements</div>
-            </div>
-            <div class="p-4 bg-gray-900 border-t border-gray-800 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-gray-900 font-bold"><i class="fa-solid fa-user"></i></div>
-                <div class="text-sm">
-                    <div id="current-username" class="font-bold text-white">User</div>
-                    <div id="current-role" class="text-xs text-cyan-400">Member</div>
+        <div class="w-60 glass h-full flex flex-col border-r border-slate-900 desktop-sidebar shrink-0 z-20">
+            <div class="p-4 border-b border-slate-900 font-black neon-text flex items-center gap-2 uppercase tracking-wider text-sm"><i class="fa-solid fa-crosshairs"></i> <span class="lbl-clan-name">SNIPER</span></div>
+            <div class="p-2 flex-1 overflow-y-auto custom-scroll flex flex-col gap-1">
+                <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 mt-3 px-2">ช่องสนทนาแคลน</div>
+                <div id="room-tab-general" class="room-selector-item p-2.5 rounded-lg bg-slate-800/40 border-l-4 border-sky-400 text-white cursor-pointer flex items-center justify-between text-xs font-semibold transition" onclick="selectChatRoom('general')">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-hashtag text-slate-400 text-sm"></i>พูดคุยทั่วไป</span>
+                </div>
+                <div id="room-tab-tournament" class="room-selector-item p-2.5 rounded-lg text-slate-400 hover:bg-slate-800/40 hover:text-white cursor-pointer flex items-center justify-between text-xs font-semibold transition" onclick="selectChatRoom('tournament')">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-trophy text-slate-500 text-sm"></i>นัดซ้อมเเข่ง</span>
+                </div>
+                <div id="room-tab-media" class="room-selector-item p-2.5 rounded-lg text-slate-400 hover:bg-slate-800/40 hover:text-white cursor-pointer flex items-center justify-between text-xs font-semibold transition" onclick="selectChatRoom('media')">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-photo-film text-slate-500 text-sm"></i>ไฮไลท์ประจำสัปดาห์</span>
                 </div>
             </div>
+            
+            <div class="p-4 bg-slate-950/90 border-t border-slate-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-sky-500/10 border border-sky-400 flex items-center justify-center text-sky-400 font-bold text-sm"><i class="fa-solid fa-user-ninja"></i></div>
+                    <div class="flex flex-col">
+                        <span id="lbl-user-name" class="text-xs font-black text-white truncate max-w-[100px]">Username</span>
+                        <span id="lbl-user-role" class="text-[9px] bg-sky-500/20 text-sky-300 font-bold px-1.5 py-0.5 rounded uppercase w-max tracking-wide">Member</span>
+                    </div>
+                </div>
+                <i class="fa-solid fa-circle text-[8px] text-emerald-400 neon-text animate-pulse"></i>
+            </div>
         </div>
 
-        <div class="flex-1 h-full flex flex-col bg-[#0f172a] mobile-content">
-            <div class="h-14 border-b border-gray-800 flex items-center px-4 font-bold text-lg glass-panel gap-2">
-                <i class="fa-solid fa-folder-open text-cyan-500"></i> <span id="content-title">Dashboard</span>
+        <div class="flex-1 h-full flex flex-col bg-[#060911] content-wrapper overflow-hidden z-10">
+            
+            <div class="h-14 border-b border-slate-900 flex items-center justify-between px-6 glass shrink-0">
+                <div class="flex items-center gap-3 font-bold text-sm text-slate-200">
+                    <i class="fa-solid fa-terminal text-sky-400"></i>
+                    <span id="lbl-header-title">แดชบอร์ดข้อมูล</span>
+                </div>
+                <div class="text-xs font-medium text-slate-400 flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-lg">
+                    <i class="fa-solid fa-server text-emerald-400"></i> GAS API Connected
+                </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto custom-scrollbar relative">
+            <div class="flex-1 overflow-hidden relative">
                 
-                <div id="view-dashboard" class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="glass-panel p-6 rounded-xl flex items-center justify-between">
-                            <div><div class="text-gray-400 text-sm">Total Members</div><div class="text-3xl font-bold neon-text" id="stat-members">--</div></div>
-                            <i class="fa-solid fa-users text-4xl text-gray-700"></i>
+                <div id="view-dashboard" class="w-full h-full overflow-y-auto custom-scroll p-6 flex flex-col gap-6">
+                    <div class="p-6 rounded-2xl glass border border-sky-400/20 relative overflow-hidden flex flex-col justify-center min-h-[160px] neon-glow">
+                        <div class="absolute right-6 top-6 text-7xl text-sky-500/5"><i class="fa-solid fa-crosshairs"></i></div>
+                        <h2 class="text-3xl font-black text-white tracking-wide uppercase mb-1 lbl-clan-name">SNIPER CLAN</h2>
+                        <p id="lbl-clan-motto" class="text-xs text-sky-400 font-semibold tracking-wider italic">One Shot, One Kill.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="glass p-5 rounded-xl flex items-center justify-between border border-slate-800">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-xs font-semibold text-slate-400">จำนวนสมาชิกทั้งหมด</span>
+                                <span id="stat-total-users" class="text-4xl font-black text-white tracking-tight">--</span>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-sky-500/10 flex items-center justify-center text-xl text-sky-400"><i class="fa-solid fa-users"></i></div>
                         </div>
-                        <div class="glass-panel p-6 rounded-xl flex items-center justify-between">
-                            <div><div class="text-gray-400 text-sm">Online Now</div><div class="text-3xl font-bold text-green-400" id="stat-online">--</div></div>
-                            <i class="fa-solid fa-signal text-4xl text-gray-700"></i>
+                        <div class="glass p-5 rounded-xl flex items-center justify-between border border-slate-800">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-xs font-semibold text-slate-400">สมาชิกออนไลน์ขณะนี้</span>
+                                <span id="stat-online-users" class="text-4xl font-black text-emerald-400 tracking-tight">--</span>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 animate-pulse"><i class="fa-solid fa-wave-square"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1"><i class="fa-solid fa-share-nodes"></i> สังคมออนไลน์และกลุ่มนัดซ้อม</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <a id="link-discord" href="#" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 hover:border-indigo-500/50 transition font-bold text-sm text-slate-200"><i class="fa-brands fa-discord text-2xl text-indigo-400"></i> เข้าร่วม Discord แคลน</a>
+                            <a id="link-facebook" href="#" target="_blank" class="glass p-4 rounded-xl flex items-center gap-4 hover:border-blue-500/50 transition font-bold text-sm text-slate-200"><i class="fa-brands fa-facebook text-2xl text-blue-400"></i> กลุ่มแคลนบน Facebook</a>
                         </div>
                     </div>
                 </div>
 
-                <div id="view-chat" class="hidden flex flex-col h-full absolute inset-0">
-                    <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-4"></div>
-                    <div class="p-4 bg-gray-900 border-t border-gray-800">
-                        <div class="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-2 border border-gray-700 focus-within:border-cyan-400">
-                            <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-transparent outline-none text-white px-2">
-                            <button onclick="sendMessage()" class="text-cyan-500 hover:text-cyan-400 text-xl"><i class="fa-solid fa-paper-plane"></i></button>
+                <div id="view-chat" class="hidden w-full h-full flex flex-col absolute inset-0 overflow-hidden">
+                    <div id="chat-scroller" class="flex-1 overflow-y-auto custom-scroll p-6 flex flex-col gap-4"></div>
+                    
+                    <div class="p-4 bg-slate-950/80 border-t border-slate-900 shrink-0">
+                        <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 focus-within:border-sky-400 px-4 py-2.5 rounded-xl transition-all duration-150">
+                            <input type="text" id="inp-chat-msg" placeholder="พิมพ์ข้อความคุยกันในแคลนที่นี่..." class="flex-1 bg-transparent border-none outline-none text-white text-sm">
+                            <button onclick="executeSendChat()" class="text-sky-400 hover:text-sky-300 active:scale-95 text-lg transition px-1"><i class="fa-solid fa-paper-plane"></i></button>
                         </div>
                     </div>
                 </div>
 
-                <div id="view-rules" class="hidden p-6 h-full flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-cyan-400"><i class="fa-solid fa-scale-balanced"></i> Clan Rules</h2>
-                        <button id="btn-edit-rules" onclick="editRules()" class="hidden bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded text-sm text-cyan-400 border border-gray-700"><i class="fa-solid fa-pen"></i> Edit (Admin)</button>
+                <div id="view-announcements" class="hidden w-full h-full overflow-y-auto custom-scroll p-6 flex flex-col gap-4 absolute inset-0">
+                    <div class="flex justify-between items-center px-1 mb-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-bullhorn"></i> รายการประกาศและอัปเดตของแคลน</span>
+                        <button id="btn-add-ann-modal" onclick="openAnnModal()" class="hidden bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fa-solid fa-square-plus"></i> สร้างประกาศใหม่</button>
                     </div>
-                    <div id="rules-display" class="glass-panel p-6 rounded-xl flex-1 whitespace-pre-wrap text-gray-300">Loading rules...</div>
-                    <textarea id="rules-editor" class="hidden glass-panel p-6 rounded-xl flex-1 w-full bg-gray-900 text-white outline-none focus:border-cyan-400 border border-transparent custom-scrollbar"></textarea>
-                    <button id="btn-save-rules" onclick="saveRules()" class="hidden mt-4 bg-green-500 hover:bg-green-400 text-gray-900 font-bold p-3 rounded"><i class="fa-solid fa-floppy-disk"></i> Save Rules</button>
+                    <div id="announcements-container" class="flex flex-col gap-4"></div>
+                </div>
+
+                <div id="view-rules" class="hidden w-full h-full p-6 flex flex-col absolute inset-0 overflow-hidden">
+                    <div class="flex justify-between items-center mb-4 shrink-0 px-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-gavel"></i> กฎและข้อตกลงร่วมกันของสมาชิก</span>
+                        <button id="btn-edit-rules" onclick="enableRulesEditor()" class="hidden bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fa-solid fa-pen-to-square"></i> แก้ไขกฎ (Rich Editor)</button>
+                    </div>
+                    
+                    <div id="rules-rendered-box" class="flex-1 glass p-6 rounded-2xl overflow-y-auto custom-scroll text-sm text-slate-300 leading-relaxed border border-slate-800"></div>
+                    <div id="rules-editor-wrapper" class="hidden flex-1 flex flex-col gap-4 overflow-hidden">
+                        <textarea id="txt-rules-editor" class="flex-1 bg-slate-900 border border-slate-800 focus:border-sky-400 rounded-2xl p-5 text-white font-mono text-sm outline-none resize-none custom-scroll"></textarea>
+                        <div class="flex gap-3 shrink-0">
+                            <button onclick="saveRulesChanges()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-lg transition flex items-center gap-2"><i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล</button>
+                            <button onclick="disableRulesEditor()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold text-xs px-5 py-2.5 rounded-lg transition">ยกเลิก</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-admin" class="hidden w-full h-full flex flex-col absolute inset-0 overflow-hidden">
+                    <div class="flex bg-slate-950 border-b border-slate-900 shrink-0">
+                        <button id="btn-sub-users" onclick="switchAdminSubTab('users')" class="flex-1 text-center py-3 border-b-2 border-sky-400 text-sky-400 font-bold text-xs transition"><i class="fa-solid fa-users-gear"></i> จัดการอนุมัติสมาชิก</button>
+                        <button id="btn-sub-theme" onclick="switchAdminSubTab('theme')" class="flex-1 text-center py-3 border-b-2 border-transparent text-slate-400 hover:text-white font-bold text-xs transition"><i class="fa-solid fa-sliders"></i> ตั้งค่าธีมและข้อมูลแคลน</button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto custom-scroll p-6">
+                        <div id="admin-sub-users" class="w-full flex flex-col gap-4">
+                            <div class="overflow-x-auto rounded-xl border border-slate-800 glass">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-bold">
+                                            <th class="p-4">ชื่อสมาชิก</th>
+                                            <th class="p-4">ระดับสิทธิ์ (Role)</th>
+                                            <th class="p-4">สถานะ (Status)</th>
+                                            <th class="p-4 text-center">จัดการคำสั่งอนุมัติ / แบน</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-users-table-body" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="admin-sub-theme" class="w-full flex flex-col gap-5 hidden">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="flex flex-col gap-1.5"><label class="text-xs font-bold text-slate-400 uppercase tracking-wide">ชื่อแคลนหลัก</label><input type="text" id="adm-set-name" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-sky-400 outline-none"></div>
+                                <div class="flex flex-col gap-1.5"><label class="text-xs font-bold text-slate-400 uppercase tracking-wide">คำขวัญสโลแกน</label><input type="text" id="adm-set-motto" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-sky-400 outline-none"></div>
+                                <div class="flex flex-col gap-1.5"><label class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลิงก์ Discord แคลน</label><input type="text" id="adm-set-discord" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-sky-400 outline-none"></div>
+                                <div class="flex flex-col gap-1.5"><label class="text-xs font-bold text-slate-400 uppercase tracking-wide">ลิงก์กลุ่ม Facebook</label><input type="text" id="adm-set-facebook" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-sky-400 outline-none"></div>
+                                <div class="flex flex-col gap-1.5"><label class="text-xs font-bold text-slate-400 uppercase tracking-wide">รหัสโทนสีหลัก (Hex Code)</label><input type="text" id="adm-set-color" class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-white text-xs focus:border-sky-400 outline-none"></div>
+                            </div>
+                            <button onclick="executeSaveClanSettings()" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-black py-3 rounded-lg text-xs transition uppercase tracking-widest"><i class="fa-solid fa-square-check"></i> บันทึกข้อมูลอัตลักษณ์แคลนสำเร็จ</button>
+                        </div>
+                    </div>
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <div id="modal-announcement" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="w-full max-w-lg glass rounded-2xl p-6 flex flex-col gap-4 border border-slate-800 neon-glow">
+            <div class="flex justify-between items-center"><h3 class="text-base font-bold text-white"><i class="fa-solid fa-bullhorn text-sky-400"></i> สร้างประกาศข่าวสารแคลนใหม่</h3><button onclick="closeAnnModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-circle-xmark"></i></button></div>
+            <div class="flex flex-col gap-1"><label class="text-xs font-bold text-slate-400">หัวข้อของประกาศ</label><input type="text" id="inp-ann-title" class="bg-slate-900 border border-slate-800 focus:border-sky-400 p-3 rounded-lg text-white text-xs outline-none"></div>
+            <div class="flex flex-col gap-1"><label class="text-xs font-bold text-slate-400">เนื้อหา / รายละเอียดสำคัญ</label><textarea id="inp-ann-content" rows="5" class="bg-slate-900 border border-slate-800 focus:border-sky-400 p-3 rounded-lg text-white text-xs outline-none resize-none custom-scroll"></textarea></div>
+            <button onclick="executeCreateAnnouncement()" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-3 rounded-lg text-xs transition flex items-center justify-center gap-2 shadow-lg"><i class="fa-solid fa-square-check"></i> ยืนยันปล่อยประกาศเผยแพร่</button>
         </div>
     </div>
 
     <script>
-        let currentUser = null;
-        let currentRoom = 'general';
-        let chatInterval = null;
+        let currentSection = 'dashboard';
+        let activeChatRoom = 'general';
+        let userSession = null;
+        let systemSettings = {};
+        let chatTimer = null;
 
-        async function fetchAPI(data) {
+        // แกนหลักรับ-ส่ง API ไปยัง Google Apps Script (GAS) ด้วย POST Method บังคับรันแบบ text/plain หลีกเลี่ยงปัญหา CORS
+        async function runAPI(payload) {
             try {
                 const response = await fetch(API_URL, {
-                    method: 'POST', mode: 'cors', cache: 'no-cache',
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
                     headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
                 return await response.json();
-            } catch (error) {
-                showToast("Connection Error", "error");
-                return { success: false };
+            } catch (err) {
+                displayToast("ตัดการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่อีกครั้ง", "error");
+                return { success: false, message: err.message };
             }
         }
 
-        function showToast(msg, type = 'info') {
-            const toast = document.getElementById('toast');
-            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation text-red-500' : 'fa-circle-check text-green-500'}"></i> ${msg}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
+        function displayToast(msg, type = 'info') {
+            const el = document.getElementById('toast-box');
+            el.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation text-rose-500' : 'fa-circle-check text-emerald-400'}"></i> ${msg}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3500);
         }
 
-        function toggleAuthForm(type) {
-            ['login', 'register', 'reset'].forEach(t => document.getElementById(`form-${t}`).classList.add('hidden'));
-            document.getElementById(`form-${type}`).classList.remove('hidden');
+        function switchAuthView(formType) {
+            ['login', 'register', 'forgot'].forEach(f => document.getElementById(`box-${f}`).classList.add('hidden'));
+            document.getElementById(`box-${formType}`).classList.remove('hidden');
         }
 
-        async function handleAuth(action) {
-            let user, pass, payload;
-            
-            if(action === 'login') {
-                user = document.getElementById('login-user').value;
-                pass = document.getElementById('login-pass').value;
-                payload = { action: 'login', username: user, password: pass };
-            } else if (action === 'register') {
-                user = document.getElementById('reg-user').value;
-                pass = document.getElementById('reg-pass').value;
-                payload = { action: 'register', username: user, password: pass };
-            } else {
-                user = document.getElementById('res-user').value;
-                pass = document.getElementById('res-pass').value;
-                payload = { action: 'reset_password', username: user, newPassword: pass };
-            }
-
-            if(!user || !pass) return showToast("กรุณากรอกข้อมูลให้ครบ", "error");
-
-            showToast("Processing...", "info");
-            const res = await fetchAPI(payload);
-
-            if (res.success) {
-                showToast(res.message || "Success", "success");
-                if(action === 'login') {
-                    currentUser = res.user;
-                    sessionStorage.setItem('user', JSON.stringify(res.user));
-                    initApp();
-                } else {
-                    toggleAuthForm('login');
-                }
-            } else {
-                showToast(res.message, "error");
-            }
-        }
-
-        function initApp() {
-            document.getElementById('auth-container').classList.add('hidden');
-            document.getElementById('main-view').classList.remove('hidden');
-            document.getElementById('current-username').innerText = currentUser.username;
-            document.getElementById('current-role').innerText = currentUser.role;
-
-            if(['Admin', 'Clan Leader'].includes(currentUser.role)) {
-                document.getElementById('btn-edit-rules').classList.remove('hidden');
-            }
-            switchTab('dashboard');
-        }
-
-        function logout() {
-            sessionStorage.removeItem('user');
-            currentUser = null;
-            if(chatInterval) clearInterval(chatInterval);
-            document.getElementById('main-view').classList.add('hidden');
-            document.getElementById('auth-container').classList.remove('hidden');
-            toggleAuthForm('login');
-        }
-
-        function switchTab(tab) {
-            // ซ่อนทุกหน้า
-            ['dashboard', 'chat', 'rules'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).classList.remove('active');
-            });
-            // แสดงหน้าที่เลือก
-            document.getElementById(`view-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).classList.add('active');
-            
-            // เคลียร์ Timer ของแชทเสมอเมื่อออกจากหน้าแชท
-            if(chatInterval) clearInterval(chatInterval);
-
-            if (tab === 'dashboard') {
-                document.getElementById('content-title').innerText = 'Dashboard';
-                loadDashboardStats();
-            } else if (tab === 'chat') {
-                // จำห้องล่าสุดที่เคยเข้าไว้
-                loadChat(currentRoom, true);
-            } else if (tab === 'rules') {
-                document.getElementById('content-title').innerText = 'Clan Rules';
-                loadRules();
-            }
-        }
-
-        async function loadDashboardStats() {
-            const res = await fetchAPI({ action: 'get_dashboard' });
-            if(res.success) {
-                document.getElementById('stat-members').innerText = res.stats.members;
-                document.getElementById('stat-online').innerText = res.stats.online;
-            }
-        }
-
-        async function loadChat(room, forceLoad = false) {
-            // ป้องกันการโหลดซ้ำหากผู้ใช้กดห้องเดิมซ้ำๆ
-            if (!forceLoad && currentRoom === room && !document.getElementById('view-chat').classList.contains('hidden')) return;
-            
-            currentRoom = room;
-            document.getElementById('content-title').innerText = `Room: #${room}`;
-            
-            // 1. เคลียร์ Timer ทันทีเพื่อป้องกัน API สแปมซ้อนทับกัน
-            if (chatInterval) clearInterval(chatInterval);
-            
-            // 2. ล้างหน้าจอแชทเก่า และใส่ Loading UI
-            const box = document.getElementById('chat-messages');
-            box.innerHTML = '<div class="flex justify-center items-center h-full text-cyan-400"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>';
-
-            // 3. จัดการ Active State แถบสีด้านซ้ายให้รู้ว่าอยู่ห้องไหน
-            document.querySelectorAll('.room-item').forEach(el => {
-                el.classList.remove('bg-gray-700', 'border-cyan-500');
-                el.classList.add('border-transparent');
-            });
-            const activeRoom = document.getElementById(`room-${room}`);
-            if(activeRoom) {
-                activeRoom.classList.remove('border-transparent');
-                activeRoom.classList.add('bg-gray-700', 'border-cyan-500');
-            }
-
-            // 4. ดึงข้อมูลใหม่ และเริ่ม Timer ใหม่
-            await fetchMessages();
-            chatInterval = setInterval(fetchMessages, 2000);
-        }
-
-        async function fetchMessages() {
-            const res = await fetchAPI({ action: 'get_chat', room: currentRoom });
-            if (res.success) {
-                const box = document.getElementById('chat-messages');
-                const wasAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 50;
+        // ระบบควบคุม Authentication (Login, Register, Forgot Password) ทำงานร่วมกับ Sheet จริว
+        async function submitAuth(type) {
+            if (type === 'login') {
+                const u = document.getElementById('inp-login-user').value.trim();
+                const p = document.getElementById('inp-login-pass').value.trim();
+                if (!u || !p) return displayToast("กรุณาระบุ Username และ Password", "error");
                 
-                let newHtml = '';
-                if(res.messages.length === 0) {
-                    newHtml = '<div class="text-center text-gray-500 mt-10">ยังไม่มีข้อความในห้องนี้ เริ่มทักทายกันเลย!</div>';
+                const res = await runAPI({ action: 'login', username: u, password: p });
+                if (res.success) {
+                    userSession = res.user;
+                    sessionStorage.setItem('sniper_session', JSON.stringify(res.user));
+                    displayToast(`ยินดีต้อนรับเข้าสู่ระบบแคลน: ${res.user.username}`, "success");
+                    bootstrapApp();
                 } else {
-                    res.messages.forEach(msg => {
-                        const time = new Date(msg.timestamp).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-                        const isMe = msg.sender === currentUser.username;
-                        const isAdmin = ['Admin', 'Clan Leader'].includes(currentUser.role);
+                    displayToast(res.message, "error");
+                }
+            } else if (type === 'register') {
+                const u = document.getElementById('inp-reg-user').value.trim();
+                const p = document.getElementById('inp-reg-pass').value.trim();
+                if (!u || !p) return displayToast("กรุณากรอกข้อมูลการสมัครให้ครบถ้วน", "error");
+                
+                const res = await runAPI({ action: 'register', username: u, password: p });
+                if (res.success) {
+                    displayToast(res.message, "success");
+                    switchAuthView('login');
+                } else {
+                    displayToast(res.message, "error");
+                }
+            } else if (type === 'forgot') {
+                const u = document.getElementById('inp-for-user').value.trim();
+                const p = document.getElementById('inp-for-pass').value.trim();
+                if (!u || !p) return displayToast("กรุณากรอกข้อมูลตั้งรหัสผ่านใหม่ให้ครบถ้วน", "error");
+                
+                const res = await runAPI({ action: 'reset_password', username: u, newPassword: p });
+                if (res.success) {
+                    displayToast(res.message, "success");
+                    switchAuthView('login');
+                } else {
+                    displayToast(res.message, "error");
+                }
+            }
+        }
+
+        // เริ่มต้นการดึงคอนฟิกและสิทธิ์ในการเข้าถึงหน้าเว็บบอร์ดของแอปพลิเคชัน
+        function bootstrapApp() {
+            document.getElementById('auth-panel').classList.add('hidden');
+            document.getElementById('app-panel').classList.remove('hidden');
+            
+            document.getElementById('lbl-user-name').innerText = userSession.username;
+            document.getElementById('lbl-user-role').innerText = userSession.role;
+
+            // ตรวจสอบสิทธิ์ระดับแอดมินหรือหัวหน้าแคลนในการมองเห็นและการใช้งานปุ่มเมนูพิเศษหลังบ้าน
+            if (['Admin', 'Clan Leader', 'Moderator'].includes(userSession.role)) {
+                document.getElementById('btn-nav-admin').classList.remove('hidden');
+                document.getElementById('btn-add-ann-modal').classList.remove('hidden');
+                document.getElementById('btn-edit-rules').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-nav-admin').classList.add('hidden');
+                document.getElementById('btn-add-ann-modal').classList.add('hidden');
+                document.getElementById('btn-edit-rules').classList.add('hidden');
+            }
+
+            syncGlobalConfig();
+            changeSection('dashboard');
+        }
+
+        function processLogout() {
+            sessionStorage.removeItem('sniper_session');
+            userSession = null;
+            if (chatTimer) clearInterval(chatTimer);
+            document.getElementById('app-panel').classList.add('hidden');
+            document.getElementById('auth-panel').classList.remove('hidden');
+            switchAuthView('login');
+        }
+
+        // ดึงการตั้งค่าข้อมูล อัตลักษณ์ และสีของแอปพลิเคชันที่บันทึกไว้บนหน้าแผ่นงานชีต
+        async function syncGlobalConfig() {
+            const res = await runAPI({ action: 'get_settings' });
+            if (res.success && res.settings) {
+                systemSettings = res.settings;
+                document.querySelectorAll('.lbl-clan-name').forEach(el => el.innerText = systemSettings.clan_name || 'Sniper');
+                document.getElementById('lbl-clan-motto').innerText = systemSettings.clan_motto || '';
+                document.getElementById('link-discord').href = systemSettings.social_discord || '#';
+                document.getElementById('link-facebook').href = systemSettings.social_facebook || '#';
+                document.getElementById('rules-rendered-box').innerHTML = systemSettings.clan_rules || 'ยังไม่มีการระบุข้อความกฎระเบียบแคลน';
+                
+                if (systemSettings.theme_color) {
+                    document.documentElement.style.setProperty('--neon-color', systemSettings.theme_color);
+                }
+            }
+        }
+
+        // ฟังก์ชันสลับเมนูเนื้อหาหลัก (Sidebar Router Logic)
+        function changeSection(section) {
+            currentSection = section;
+            if (chatTimer) clearInterval(chatTimer);
+            
+            ['dashboard', 'chat', 'announcements', 'rules', 'admin'].forEach(s => {
+                document.getElementById(`view-${s}`).classList.add('hidden');
+                const btn = document.getElementById(`btn-nav-${s}`);
+                if (btn) btn.classList.remove('active');
+            });
+
+            document.getElementById(`view-${section}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-nav-${section}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (section === 'dashboard') {
+                document.getElementById('lbl-header-title').innerText = 'ระบบจัดการแดชบอร์ดแคลน';
+                fetchDashboardStats();
+            } else if (section === 'chat') {
+                selectChatRoom(activeChatRoom, true);
+            } else if (section === 'announcements') {
+                document.getElementById('lbl-header-title').innerText = 'ข่าวสารและกระดานประกาศแคลน';
+                renderAnnouncements();
+            } else if (section === 'rules') {
+                document.getElementById('lbl-header-title').innerText = 'ข้อตกลงและกฎเกณฑ์แคลน';
+                syncGlobalConfig();
+                disableRulesEditor();
+            } else if (section === 'admin') {
+                document.getElementById('lbl-header-title').innerText = 'ศูนย์ควบคุมความปลอดภัยของแอดมิน';
+                switchAdminSubTab('users');
+            }
+        }
+
+        async function fetchDashboardStats() {
+            const res = await runAPI({ action: 'get_dashboard' });
+            if (res.success && res.stats) {
+                document.getElementById('stat-total-users').innerText = res.stats.total;
+                document.getElementById('stat-online-users').innerText = res.stats.online;
+            }
+        }
+
+        // จัดการสลับห้องแชทสไตล์ดิสคอร์ดพร้อมป้องกันปัญหาค้างหรือหน่วงแบบ Real-time 2 วินาที
+        function selectChatRoom(room, force = false) {
+            if (!force && activeChatRoom === room && !document.getElementById('view-chat').classList.contains('hidden')) return;
+            activeChatRoom = room;
+            document.getElementById('lbl-header-title').innerText = `ช่องแชทสนทนา: #${room.toUpperCase()}`;
+            
+            document.querySelectorAll('.room-selector-item').forEach(el => el.className = "room-selector-item p-2.5 rounded-lg text-slate-400 hover:bg-slate-800/40 hover:text-white cursor-pointer flex items-center justify-between text-xs font-semibold transition");
+            const targetTab = document.getElementById(`room-tab-${room}`);
+            if (targetTab) targetTab.className = "room-selector-item p-2.5 rounded-lg bg-slate-800/40 border-l-4 border-sky-400 text-white cursor-pointer flex items-center justify-between text-xs font-semibold transition";
+            
+            if (chatTimer) clearInterval(chatTimer);
+            document.getElementById('chat-scroller').innerHTML = '<div class="w-full h-full flex items-center justify-center text-sky-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
+            
+            syncChatLog();
+            chatTimer = setInterval(syncChatLog, 2000); // เรียกอัปเดตข้อมูลแชท real time ทุกๆ 2 วินาที
+        }
+
+        // ดึงข้อความสนทนาและตรวจสอบป้ายสิทธิ์แอดมินในการสั่งลบข้อความ (Delete) หรือปักหมุด (Pin) ได้จริงจากหน้าเว็บบอร์ด
+        async function syncChatLog() {
+            if (currentSection !== 'chat') return;
+            const res = await runAPI({ action: 'get_chat', room: activeChatRoom });
+            if (res.success && res.messages) {
+                const box = document.getElementById('chat-scroller');
+                const stayAtBottom = box.scrollHeight - box.scrollTop <= box.clientHeight + 100;
+                
+                let outputHtml = '';
+                if (res.messages.length === 0) {
+                    outputHtml = `<div class="w-full text-center py-12 text-slate-500 text-xs font-medium"><i class="fa-solid fa-comments text-3xl mb-2 block text-slate-600"></i> สัญญาณห้องว่างเปล่า ไม่มีข้อความพิมพ์ทักทายกันเลยในช่องนี้</div>`;
+                } else {
+                    // จัดเรียงแชทที่ถูกปักหมุด (Pinned Chat) ให้อยู่ด้านบนสุดของแถบสนทนาเสมอ
+                    res.messages.sort((x, y) => (y.isPinned ? 1 : 0) - (x.isPinned ? 1 : 0));
+                    
+                    res.messages.forEach(m => {
+                        const dateStr = new Date(m.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                        const isPinMessage = m.isPinned;
+                        const canAdminManage = ['Admin', 'Clan Leader', 'Moderator'].includes(userSession.role);
                         
-                        newHtml += `
-                            <div class="flex gap-3 hover:bg-gray-800 p-2 rounded transition group">
-                                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-cyan-400 font-bold shrink-0"><i class="fa-solid fa-user"></i></div>
-                                <div class="flex-1">
-                                    <div class="flex items-baseline gap-2">
-                                        <span class="font-bold ${isMe ? 'text-cyan-400' : 'text-gray-300'}">${msg.sender}</span>
-                                        <span class="text-xs text-gray-500">${time}</span>
+                        outputHtml += `
+                            <div class="flex gap-3 hover:bg-slate-900/60 p-3 rounded-xl transition-all duration-150 group relative ${isPinMessage ? 'bg-sky-500/5 border border-sky-400/20' : ''}">
+                                <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-sky-400 font-bold shrink-0 text-sm"><i class="fa-solid fa-crosshairs"></i></div>
+                                <div class="flex flex-col flex-1 gap-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-black text-slate-200">${m.sender}</span>
+                                        <span class="text-[9px] text-slate-500">${dateStr}</span>
+                                        ${isPinMessage ? '<span class="text-[9px] text-sky-400 font-bold bg-sky-500/10 px-1.5 py-0.5 rounded"><i class="fa-solid fa-thumbtack"></i> PINNED</span>' : ''}
                                     </div>
-                                    <div class="text-gray-200 mt-1">${msg.message}</div>
+                                    <p class="text-xs text-slate-300 font-normal break-all leading-relaxed">${m.message}</p>
                                 </div>
-                                ${isAdmin ? `<button onclick="deleteMessage('${msg.id}')" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition px-2"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                                ${canAdminManage ? `
+                                    <div class="absolute right-4 top-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-150">
+                                        <button onclick="triggerPinChat('${m.id}')" class="text-sky-400 hover:text-sky-300 text-xs bg-slate-950 px-2 py-1 rounded border border-slate-800"><i class="fa-solid fa-thumbtack"></i></button>
+                                        <button onclick="triggerDeleteChat('${m.id}')" class="text-rose-500 hover:text-rose-400 text-xs bg-slate-950 px-2 py-1 rounded border border-slate-800"><i class="fa-solid fa-trash-can"></i></button>
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                     });
                 }
-                
-                box.innerHTML = newHtml;
-                if (wasAtBottom) box.scrollTop = box.scrollHeight;
+                box.innerHTML = outputHtml;
+                if (stayAtBottom) box.scrollTop = box.scrollHeight;
             }
         }
 
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if(!text) return;
-            
+        async function executeSendChat() {
+            const input = document.getElementById('inp-chat-msg');
+            const txt = input.value.trim();
+            if (!txt) return;
             input.value = '';
-            await fetchAPI({ action: 'post_chat', room: currentRoom, sender: currentUser.username, message: text });
-            fetchMessages();
+            
+            await runAPI({ action: 'post_chat', room: activeChatRoom, sender: userSession.username, message: txt });
+            syncChatLog();
         }
 
-        async function deleteMessage(id) {
-            if(!confirm("ต้องการลบข้อความนี้ใช่หรือไม่?")) return;
-            await fetchAPI({ action: 'delete_chat', messageId: id });
-            fetchMessages();
+        document.getElementById('inp-chat-msg').addEventListener('keypress', e => { if (e.key === 'Enter') executeSendChat(); });
+
+        async function triggerDeleteChat(id) {
+            if (!confirm("ยืนยันระงับและลบข้อความสนทนานี้ถาวรหรือไม่?")) return;
+            const res = await runAPI({ action: 'delete_chat', messageId: id });
+            if (res.success) { displayToast("ลบข้อความแชทสำเร็จ", "success"); syncChatLog(); }
         }
 
-        document.getElementById('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+        async function triggerPinChat(id) {
+            const res = await runAPI({ action: 'toggle_pin_chat', messageId: id });
+            if (res.success) { displayToast("เปลี่ยนสถานะการปักหมุดข้อความเรียบร้อย", "success"); syncChatLog(); }
+        }
 
-        async function loadRules() {
-            const res = await fetchAPI({ action: 'get_rules' });
-            if(res.success) {
-                document.getElementById('rules-display').innerText = res.content;
-                document.getElementById('rules-editor').value = res.content;
+        // การบริหารจัดการกระดานประกาศข้อมูล (Announcements System)
+        async function renderAnnouncements() {
+            const container = document.getElementById('announcements-container');
+            container.innerHTML = '<div class="w-full py-12 flex justify-center text-sky-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
+            
+            const res = await runAPI({ action: 'get_announcements' });
+            if (res.success && res.announcements) {
+                let html = '';
+                if (res.announcements.length === 0) {
+                    html = `<div class="w-full text-center py-12 glass rounded-2xl text-slate-500 text-xs font-semibold"><i class="fa-solid fa-bullhorn text-4xl mb-3 block text-slate-600"></i> ยังไม่มีการออกข่าวประกาศทางการจากแอดมินแคลน</div>`;
+                } else {
+                    res.announcements.forEach(a => {
+                        const date = new Date(a.timestamp).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+                        const canDelete = ['Admin', 'Clan Leader', 'Moderator'].includes(userSession.role);
+                        
+                        html += `
+                            <div class="glass p-5 rounded-xl border border-slate-800 flex flex-col gap-2 relative group">
+                                <div class="flex justify-between items-start gap-4">
+                                    <h4 class="text-sm font-black text-white tracking-wide"><i class="fa-solid fa-bullhorn text-sky-400 mr-1"></i> ${a.title}</h4>
+                                    <span class="text-[10px] text-slate-500 font-bold uppercase bg-slate-950 px-2 py-1 rounded border border-slate-900">${date} - โดย ${a.author}</span>
+                                </div>
+                                <p class="text-xs text-slate-300 leading-relaxed font-normal whitespace-pre-wrap mt-1">${a.content}</p>
+                                ${canDelete ? `<button onclick="executeDeleteAnn('${a.id}')" class="absolute bottom-4 right-4 text-rose-500 hover:text-rose-400 text-xs font-bold opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash-can"></i> ลบประกาศ</button>` : ''}
+                            </div>
+                        `;
+                    });
+                }
+                container.innerHTML = html;
             }
         }
 
-        function editRules() {
-            document.getElementById('rules-display').classList.add('hidden');
-            document.getElementById('rules-editor').classList.remove('hidden');
-            document.getElementById('btn-save-rules').classList.remove('hidden');
-            document.getElementById('btn-edit-rules').classList.add('hidden');
+        function openAnnModal() { document.getElementById('modal-announcement').classList.remove('hidden'); }
+        function closeAnnModal() { document.getElementById('modal-announcement').classList.add('hidden'); }
+
+        async function executeCreateAnnouncement() {
+            const t = document.getElementById('inp-ann-title').value.trim();
+            const c = document.getElementById('inp-ann-content').value.trim();
+            if (!t || !c) return displayToast("กรุณากรอกข้อมูลหัวข้อและรายละเอียดให้ครบถ้วน", "error");
+            
+            closeAnnModal();
+            displayToast("กำลังดำเนินการปล่อยข่าวสาร...", "info");
+            const res = await runAPI({ action: 'post_announcement', title: t, content: c, author: userSession.username });
+            if (res.success) {
+                displayToast("เพิ่มข้อมูลประกาศสำคัญสำเร็จเรียบร้อย", "success");
+                document.getElementById('inp-ann-title').value = '';
+                document.getElementById('inp-ann-content').value = '';
+                renderAnnouncements();
+            }
         }
 
-        async function saveRules() {
-            const content = document.getElementById('rules-editor').value;
-            showToast("Saving...", "info");
-            const res = await fetchAPI({ action: 'save_rules', content: content });
-            if(res.success) {
-                showToast("บันทึกกฎเรียบร้อย", "success");
-                document.getElementById('rules-display').innerText = content;
-                document.getElementById('rules-display').classList.remove('hidden');
-                document.getElementById('rules-editor').classList.add('hidden');
-                document.getElementById('btn-save-rules').classList.add('hidden');
+        async function executeDeleteAnn(id) {
+            if (!confirm("ต้องการถอดและลบประกาศนี้ใช่หรือไม่?")) return;
+            const res = await runAPI({ action: 'delete_announcement', id: id });
+            if (res.success) { displayToast("ลบข้อมูลประกาศสำเร็จ", "success"); renderAnnouncements(); }
+        }
+
+        // ระบบควบคุมและแก้ไขกฎแคลนผ่านหน้าเว็บด้วย Rich Text Editor จำลอง
+        function enableRulesEditor() {
+            document.getElementById('rules-rendered-box').classList.add('hidden');
+            document.getElementById('rules-editor-wrapper').classList.remove('hidden');
+            document.getElementById('btn-edit-rules').classList.add('hidden');
+            document.getElementById('txt-rules-editor').value = systemSettings.clan_rules || '';
+        }
+
+        function disableRulesEditor() {
+            document.getElementById('rules-rendered-box').classList.remove('hidden');
+            document.getElementById('rules-editor-wrapper').classList.add('hidden');
+            if (['Admin', 'Clan Leader', 'Moderator'].includes(userSession.role)) {
                 document.getElementById('btn-edit-rules').classList.remove('hidden');
             }
         }
 
-        window.onload = () => {
-            const saved = sessionStorage.getItem('user');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                initApp();
+        async function saveRulesChanges() {
+            const updatedHTML = document.getElementById('txt-rules-editor').value;
+            displayToast("กำลังเซฟข้อมูลลงระบบชีต...", "info");
+            
+            const res = await runAPI({ action: 'save_settings', settings: { 'clan_rules': updatedHTML } });
+            if (res.success) {
+                displayToast("อัปเดตและบันทึกข้อตกลงกฎแคลนเรียบร้อยแล้ว", "success");
+                await syncGlobalConfig();
+                disableRulesEditor();
             }
         }
+
+        // หน้าต่างบริหารจัดการแผงแอดมิน (Admin Multi-sub-tabs Logic)
+        function switchAdminSubTab(subTab) {
+            ['users', 'theme'].forEach(t => {
+                document.getElementById(`admin-sub-${t}`).classList.add('hidden');
+                document.getElementById(`btn-sub-${t}`).className = "flex-1 text-center py-3 border-b-2 border-transparent text-slate-400 hover:text-white font-bold text-xs transition";
+            });
+            document.getElementById(`admin-sub-${subTab}`).classList.remove('hidden');
+            document.getElementById(`btn-sub-${subTab}`).className = "flex-1 text-center py-3 border-b-2 border-sky-400 text-sky-400 font-bold text-xs transition";
+
+            if (subTab === 'users') {
+                renderAdminUsersTable();
+            } else if (subTab === 'theme') {
+                document.getElementById('adm-set-name').value = systemSettings.clan_name || '';
+                document.getElementById('adm-set-motto').value = systemSettings.clan_motto || '';
+                document.getElementById('adm-set-discord').value = systemSettings.social_discord || '';
+                document.getElementById('adm-set-facebook').value = systemSettings.social_facebook || '';
+                document.getElementById('adm-set-color').value = systemSettings.theme_color || '#38bdf8';
+            }
+        }
+
+        // โหลดและเรนเดอร์ตารางรายชื่อผู้ใช้เพื่อให้แอดมินสั่ง อนุมัติสิทธิ์ เปลี่ยนตำแหน่ง หรือแบนได้จริง
+        async function renderAdminUsersTable() {
+            const tbody = document.getElementById('admin-users-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-sky-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></td></tr>';
+            
+            const res = await runAPI({ action: 'get_users' });
+            if (res.success && res.users) {
+                let html = '';
+                res.users.forEach(u => {
+                    // แอดมินหลักจะไม่สามารถกดแก้ไขสถานะตนเองได้เพื่อความปลอดภัยของระบบแอป
+                    const isSelf = u.username === userSession.username;
+                    
+                    html += `
+                        <tr class="border-b border-slate-800/50 hover:bg-slate-900/40 transition">
+                            <td class="p-4 font-bold text-white text-xs">${u.username} ${isSelf ? '<span class="text-[9px] font-bold text-sky-400">(บัญชีคุณ)</span>' : ''}</td>
+                            <td class="p-4">
+                                <select id="sel-role-${u.id}" ${isSelf ? 'disabled' : ''} class="bg-slate-900 border border-slate-800 rounded p-1 text-white text-xs outline-none">
+                                    <option value="Member" ${u.role === 'Member' ? 'selected' : ''}>Member</option>
+                                    <option value="Moderator" ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                                    <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin</option>
+                                    <option value="Clan Leader" ${u.role === 'Clan Leader' ? 'selected' : ''}>Clan Leader</option>
+                                </select>
+                            </td>
+                            <td class="p-4">
+                                <select id="sel-status-${u.id}" ${isSelf ? 'disabled' : ''} class="bg-slate-900 border border-slate-800 rounded p-1 text-white text-xs outline-none">
+                                    <option value="Pending" ${u.status === 'Pending' ? 'selected' : ''}>Pending (รออนุมัติ)</option>
+                                    <option value="Active" ${u.status === 'Active' ? 'selected' : ''}>Active (อนุมัติแล้ว)</option>
+                                    <option value="Banned" ${u.status === 'Banned' ? 'selected' : ''}>Banned (ระงับสิทธิ์)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center">
+                                ${isSelf ? '<span class="text-slate-500 font-bold text-[10px]">ไม่สามารถระงับสิทธิ์ตนเองได้</span>' : `
+                                    <button onclick="executeUpdateUserPermission('${u.id}')" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-[11px] px-4 py-1.5 rounded-lg transition shadow-md"><i class="fa-solid fa-floppy-disk"></i> บันทึกสิทธิ์</button>
+                                `}
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+        }
+
+        async function executeUpdateUserPermission(userId) {
+            const selectedRole = document.getElementById(`sel-role-${userId}`).value;
+            const selectedStatus = document.getElementById(`sel-status-${userId}`).value;
+            
+            displayToast("กำลังส่งคำสั่งปรับระดับความปลอดภัย...", "info");
+            const res = await runAPI({ action: 'update_user', userId: userId, role: selectedRole, status: selectedStatus });
+            if (res.success) {
+                displayToast(res.message, "success");
+                renderAdminUsersTable();
+            }
+        }
+
+        // บันทึกและปรับเปลี่ยนธีมสีหลักและข้อมูลประชาสัมพันธ์ของแคลน
+        async function executeSaveClanSettings() {
+            const payload = {
+                clan_name: document.getElementById('adm-set-name').value.trim(),
+                clan_motto: document.getElementById('adm-set-motto').value.trim(),
+                social_discord: document.getElementById('adm-set-discord').value.trim(),
+                social_facebook: document.getElementById('adm-set-facebook').value.trim(),
+                theme_color: document.getElementById('adm-set-color').value.trim()
+            };
+
+            displayToast("กำลังบันทึกข้อมูลธีมแคลนใหม่...", "info");
+            const res = await runAPI({ action: 'save_settings', settings: payload });
+            if (res.success) {
+                displayToast("อัปเดตอัตลักษณ์และธีมสีนีออนของแคลนเสร็จสิ้น", "success");
+                await syncGlobalConfig();
+                switchAdminSubTab('theme');
+            }
+        }
+
+        // ตรวจสอบเช็คเซสชันประวัติการล็อกอินเดิมเมื่อเปิดแอปพลิเคชันขึ้นมาใหม่เพื่อความรวดเร็วในการแสดงผล
+        window.onload = () => {
+            const cachedSession = sessionStorage.getItem('sniper_session');
+            if (cachedSession) {
+                userSession = JSON.parse(cachedSession);
+                bootstrapApp();
+            }
+        };
     </script>
 </body>
 </html>
