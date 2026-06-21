@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <link rel="apple-touch-icon" sizes="512x512" href="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sniper CODM">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <style>
         :root {
             --bg-dark: #090d16;
@@ -60,7 +66,6 @@
 
         /* ตั้งค่าสถานะซ่อนฟังก์ชันสำหรับจัดการหน้าจอโทรศัพท์มือถือ */
         @media (max-width: 767px) {
-            .desktop-sidebar { display: none !important; }
             .content-wrapper { margin-left: 5rem; width: calc(100% - 5rem); }
         }
     </style>
@@ -70,7 +75,7 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycbx4pnpHdHXpRxc9VAcXslZoUX_6Bw3XZOFuup5ZaEVFBPWrm3qKfSmsBXIU68c0P6qg/exec';
         const DEFAULT_LOGO = 'https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg';
 
-        // สร้างสคริปต์ Manifest สำหรับ Progressive Web App (PWA) ให้ทำงานแบบ Standalone ไร้แถบบราวเซอร์กวนใจบนสมาร์ตโฟน
+        // สร้างสคริปต์ Manifest สำหรับ Progressive Web App (PWA) ให้ทำงานแบบ Standalone ไร้แถบบราวเซอร์กวนใจบนสมาร์ตโฟน พร้อมกำหนดไอคอนครบทุกรูปแบบ
         const manifest = {
             name: "Sniper Clan CODM",
             short_name: "Sniper",
@@ -79,7 +84,12 @@
             background_color: "#090d16",
             theme_color: "#38bdf8",
             orientation: "portrait",
-            icons: [{ src: DEFAULT_LOGO, sizes: "512x512", type: "image/jpeg" }]
+            icons: [
+                { src: DEFAULT_LOGO, sizes: "192x192", type: "image/jpeg", purpose: "any" },
+                { src: DEFAULT_LOGO, sizes: "512x512", type: "image/jpeg", purpose: "any" },
+                { src: DEFAULT_LOGO, sizes: "192x192", type: "image/jpeg", purpose: "maskable" },
+                { src: DEFAULT_LOGO, sizes: "512x512", type: "image/jpeg", purpose: "maskable" }
+            ]
         };
         const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
         const link = document.createElement('link');
@@ -142,7 +152,7 @@
             <div class="mt-auto sidebar-btn w-12 h-12 rounded-[50%] bg-slate-800 flex items-center justify-center cursor-pointer text-xl text-rose-500 hover:bg-rose-600 hover:text-white" onclick="processLogout()"><i class="fa-solid fa-power-off"></i></div>
         </div>
 
-        <div class="w-60 glass h-full flex flex-col border-r border-slate-900 desktop-sidebar shrink-0 z-20">
+        <div id="secondary-sidebar" class="hidden w-60 glass h-full flex-col border-r border-slate-900 shrink-0 z-20">
             <div class="p-4 border-b border-slate-900 font-black neon-text flex items-center gap-2 uppercase tracking-wider text-sm"><i class="fa-solid fa-crosshairs"></i> <span class="lbl-clan-name">SNIPER</span></div>
             <div class="p-2 flex-1 overflow-y-auto custom-scroll flex flex-col gap-1">
                 <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 mt-3 px-2">ช่องสนทนาแคลน</div>
@@ -336,7 +346,7 @@
             document.getElementById(`box-${formType}`).classList.remove('hidden');
         }
 
-        // ระบบควบคุม Authentication (Login, Register, Forgot Password) ทำงานร่วมกับ Sheet จริว
+        // ระบบควบคุม Authentication (Login, Register, Forgot Password) ทำงานร่วมกับ Sheet จริง
         async function submitAuth(type) {
             if (type === 'login') {
                 const u = document.getElementById('inp-login-user').value.trim();
@@ -443,11 +453,20 @@
             const activeBtn = document.getElementById(`btn-nav-${section}`);
             if (activeBtn) activeBtn.classList.add('active');
 
+            // จัดการการแสดงผลของ Secondary Sidebar: แสดงเฉพาะเมื่ออยู่ในหน้าแชท ('chat') เท่านั้น หน้าอื่นจะซ่อนห้องพูดคุยออกไป
+            const secSidebar = document.getElementById('secondary-sidebar');
+            if (section === 'chat') {
+                secSidebar.classList.remove('hidden');
+                secSidebar.classList.add('flex');
+                selectChatRoom(activeChatRoom, true);
+            } else {
+                secSidebar.classList.remove('flex');
+                secSidebar.classList.add('hidden');
+            }
+
             if (section === 'dashboard') {
                 document.getElementById('lbl-header-title').innerText = 'ระบบจัดการแดชบอร์ดแคลน';
                 fetchDashboardStats();
-            } else if (section === 'chat') {
-                selectChatRoom(activeChatRoom, true);
             } else if (section === 'announcements') {
                 document.getElementById('lbl-header-title').innerText = 'ข่าวสารและกระดานประกาศแคลน';
                 renderAnnouncements();
