@@ -12,14 +12,13 @@
     <link rel="icon" type="image/jpeg" href="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg">
     
     <meta name="theme-color" content="#090d16">
-    <link rel="apple-touch-icon" sizes="512x512" href="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sniper CODM">
-    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Sniper">
     <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" sizes="512x512" href="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg">
 
-    <link rel="manifest" href='data:application/manifest+json;utf-8,{"name":"Sniper Clan CODM","short_name":"Sniper","start_url":".","display":"fullscreen","background_color":"#090d16","theme_color":"#38bdf8","orientation":"portrait","icons":[{"src":"https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg","sizes":"192x192","type":"image/jpeg","purpose":"any"},{"src":"https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg","sizes":"512x512","type":"image/jpeg","purpose":"any"},{"src":"https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg","sizes":"192x192","type":"image/jpeg","purpose":"maskable"},{"src":"https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg","sizes":"512x512","type":"image/jpeg","purpose":"maskable"}]}'>
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU25pcGVyIENsYW4gQ09ETSIsInNob3J0X25hbWUiOiJTbmlwZXIiLCJzdGFydF91cmwiOiIuLyIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwOTBkMTYiLCJ0aGVtZV9jb2xvciI6IiMzOGJkZjgiLCJvcmllbnRhdGlvbiI6InBvcnRyYWl0IiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vaW1nMi5waWMuaW4udGgvcXVhbGl0eV9yZXN0b3JhdGlvbl8yNTY5MDYyMTExNTA1OTk3Mi5qcGVnIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL2pwZWciLCJwdXJwb3NlIjoiYW55In0seyJzcmMiOiJodHRwczovL2ltZzIucGljLmluLnRoL3F1YWxpdHlfcmVzdG9yYXRpb25fMjU2OTA2MjExMTUwNTk5NzIuanBlZyIsInNpemVzIjoiNTEyeDUxMiIsInR5cGUiOiJpbWFnZS9qcGVnIiwicHVycG9zZSI6ImFueSJ9LHsic3JjIjoiaHR0cHM6Ly9pbWcyLnBpYy5pbi50aC9xdWFsaXR5X3Jlc3RvcmF0aW9uXzI1NjkwNjIxMTE1MDU5OTcyLmpwZWciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvanBlZyIsInB1cnBvc2UiOiJtYXNrYWJsZSJ9LHsic3JjIjoiaHR0cHM6Ly9pbWcyLnBpYy5pbi50aC9xdWFsaXR5X3Jlc3RvcmF0aW9uXzI1NjkwNjIxMTE1MDU5OTcyLmpwZWciLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2UvanBlZyIsInB1cnBvc2UiOiJtYXNrYWJsZSJ9XX0=">
     
     <style>
         :root {
@@ -38,7 +37,6 @@
             user-select: none;
         }
 
-        /* เอฟเฟกต์กระจกเบลอ Glassmorphism สไตล์เกมมิ่ง */
         .glass {
             background: var(--bg-panel);
             backdrop-filter: blur(16px);
@@ -55,7 +53,6 @@
             text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
         }
 
-        /* แถบเลื่อนดีไซน์โมเดิร์นขนาดเล็ก */
         .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--neon-color); border-radius: 99px; }
@@ -71,21 +68,20 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* ตั้งค่าสถานะซ่อนฟังก์ชันสำหรับจัดการหน้าจอโทรศัพท์มือถือ */
         @media (max-width: 767px) {
             .content-wrapper { margin-left: 5rem; width: calc(100% - 5rem); }
         }
     </style>
 
     <script>
-        // บังคับเปลี่ยน URL เป็นสคริปต์ Google Web App ของคุณเองที่นี่เพื่อรันฐานข้อมูลชีตแบบสมบูรณ์
+        // เปลี่ยน URL เป็น Google Web App ของคุณ
         const API_URL = 'https://script.google.com/macros/s/AKfycbx4pnpHdHXpRxc9VAcXslZoUX_6Bw3XZOFuup5ZaEVFBPWrm3qKfSmsBXIU68c0P6qg/exec';
 
-        // ลงทะเบียนการทำงานของ Service Worker เพื่อรองรับการเป็น PWA
-        const swText = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => {});`;
-        const swBlob = new Blob([swText], { type: 'application/javascript' });
+        // ลงทะเบียน Service Worker แบบไดนามิกเพื่อรองรับกฎ PWA ของ Android
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+            const swText = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => {});`;
+            const swBlob = new Blob([swText], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
         }
     </script>
 </head>
@@ -170,7 +166,7 @@
                     <i class="fa-solid fa-terminal text-sky-400"></i>
                     <span id="lbl-header-title">แดชบอร์ดข้อมูล</span>
                 </div>
-                </div>
+            </div>
 
             <div class="flex-1 overflow-hidden relative">
                 
@@ -290,13 +286,14 @@
     </div>
 
     <script>
+        const API_URL = 'YOUR_GOOGLE_WEB_APP_URL';
+
         let currentSection = 'dashboard';
         let activeChatRoom = 'general';
         let userSession = null;
         let systemSettings = {};
         let chatTimer = null;
 
-        // แกนหลักรับ-ส่ง API ไปยัง Google Apps Script (GAS) ด้วย POST Method บังคับรันแบบ text/plain หลีกเลี่ยงปัญหา CORS
         async function runAPI(payload) {
             try {
                 const response = await fetch(API_URL, {
@@ -325,7 +322,6 @@
             document.getElementById(`box-${formType}`).classList.remove('hidden');
         }
 
-        // ระบบควบคุม Authentication (Login, Register, Forgot Password) ทำงานร่วมกับ Sheet จริง
         async function submitAuth(type) {
             if (type === 'login') {
                 const u = document.getElementById('inp-login-user').value.trim();
@@ -368,7 +364,6 @@
             }
         }
 
-        // เริ่มต้นการดึงคอนฟิกและสิทธิ์ในการเข้าถึงหน้าเว็บบอร์ดของแอปพลิเคชัน
         function bootstrapApp() {
             document.getElementById('auth-panel').classList.add('hidden');
             document.getElementById('app-panel').classList.remove('hidden');
@@ -376,7 +371,6 @@
             document.getElementById('lbl-user-name').innerText = userSession.username;
             document.getElementById('lbl-user-role').innerText = userSession.role;
 
-            // ตรวจสอบสิทธิ์ระดับแอดมินหรือหัวหน้าแคลนในการมองเห็นและการใช้งานปุ่มเมนูพิเศษหลังบ้าน
             if (['Admin', 'Clan Leader', 'Moderator'].includes(userSession.role)) {
                 document.getElementById('btn-nav-admin').classList.remove('hidden');
                 document.getElementById('btn-add-ann-modal').classList.remove('hidden');
@@ -400,7 +394,6 @@
             switchAuthView('login');
         }
 
-        // ดึงการตั้งค่าข้อมูล อัตลักษณ์ และสีของแอปพลิเคชันที่บันทึกไว้บนหน้าแผ่นงานชีต
         async function syncGlobalConfig() {
             const res = await runAPI({ action: 'get_settings' });
             if (res.success && res.settings) {
@@ -416,7 +409,6 @@
             }
         }
 
-        // ฟังก์ชันสลับเมนูเนื้อหาหลัก (Sidebar Router Logic)
         function changeSection(section) {
             currentSection = section;
             if (chatTimer) clearInterval(chatTimer);
@@ -431,7 +423,6 @@
             const activeBtn = document.getElementById(`btn-nav-${section}`);
             if (activeBtn) activeBtn.classList.add('active');
 
-            // จัดการการแสดงผลของ Secondary Sidebar: แสดงเฉพาะเมื่ออยู่ในหน้าแชท ('chat') เท่านั้น หน้าอื่นจะซ่อนห้องพูดคุยออกไป
             const secSidebar = document.getElementById('secondary-sidebar');
             if (section === 'chat') {
                 secSidebar.classList.remove('hidden');
@@ -466,7 +457,6 @@
             }
         }
 
-        // จัดการสลับห้องแชทสไตล์ดิสคอร์ดพร้อมป้องกันปัญหาค้างหรือหน่วงแบบ Real-time 2 วินาที
         function selectChatRoom(room, force = false) {
             if (!force && activeChatRoom === room && !document.getElementById('view-chat').classList.contains('hidden')) return;
             activeChatRoom = room;
@@ -480,10 +470,9 @@
             document.getElementById('chat-scroller').innerHTML = '<div class="w-full h-full flex items-center justify-center text-sky-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
             
             syncChatLog();
-            chatTimer = setInterval(syncChatLog, 2000); // เรียกอัปเดตข้อมูลแชท real time ทุกๆ 2 วินาที
+            chatTimer = setInterval(syncChatLog, 2000);
         }
 
-        // ดึงข้อความสนทนาและตรวจสอบป้ายสิทธิ์แอดมินในการสั่งลบข้อความ (Delete) หรือปักหมุด (Pin) ได้จริงจากหน้าเว็บบอร์ด
         async function syncChatLog() {
             if (currentSection !== 'chat') return;
             const res = await runAPI({ action: 'get_chat', room: activeChatRoom });
@@ -495,7 +484,6 @@
                 if (res.messages.length === 0) {
                     outputHtml = `<div class="w-full text-center py-12 text-slate-500 text-xs font-medium"><i class="fa-solid fa-comments text-3xl mb-2 block text-slate-600"></i> สัญญาณห้องว่างเปล่า ไม่มีข้อความพิมพ์ทักทายกันเลยในช่องนี้</div>`;
                 } else {
-                    // จัดเรียงแชทที่ถูกปักหมุด (Pinned Chat) ให้อยู่ด้านบนสุดของแถบสนทนาเสมอ
                     res.messages.sort((x, y) => (y.isPinned ? 1 : 0) - (x.isPinned ? 1 : 0));
                     
                     res.messages.forEach(m => {
@@ -552,7 +540,6 @@
             if (res.success) { displayToast("เปลี่ยนสถานะการปักหมุดข้อความเรียบร้อย", "success"); syncChatLog(); }
         }
 
-        // การบริหารจัดการกระดานประกาศข้อมูล (Announcements System)
         async function renderAnnouncements() {
             const container = document.getElementById('announcements-container');
             container.innerHTML = '<div class="w-full py-12 flex justify-center text-sky-400"><i class="fa-solid fa-spinner fa-spin text-3xl"></i></div>';
@@ -608,7 +595,6 @@
             if (res.success) { displayToast("ลบข้อมูลประกาศสำเร็จ", "success"); renderAnnouncements(); }
         }
 
-        // ระบบควบคุมและแก้ไขกฎแคลนผ่านหน้าเว็บด้วย Rich Text Editor จำลอง
         function enableRulesEditor() {
             document.getElementById('rules-rendered-box').classList.add('hidden');
             document.getElementById('rules-editor-wrapper').classList.remove('hidden');
@@ -636,7 +622,6 @@
             }
         }
 
-        // หน้าต่างบริหารจัดการแผงแอดมิน (Admin Multi-sub-tabs Logic)
         function switchAdminSubTab(subTab) {
             ['users', 'theme'].forEach(t => {
                 document.getElementById(`admin-sub-${t}`).classList.add('hidden');
@@ -655,7 +640,6 @@
             }
         }
 
-        // โหลดและเรนเดอร์ตารางรายชื่อผู้ใช้เพื่อให้แอดมินสั่ง อนุมัติสิทธิ์ เปลี่ยนตำแหน่ง หรือแบนได้จริง
         async function renderAdminUsersTable() {
             const tbody = document.getElementById('admin-users-table-body');
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-sky-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></td></tr>';
@@ -664,7 +648,6 @@
             if (res.success && res.users) {
                 let html = '';
                 res.users.forEach(u => {
-                    // แอดมินหลักจะไม่สามารถกดแก้ไขสถานะตนเองได้เพื่อความปลอดภัยของระบบแอป
                     const isSelf = u.username === userSession.username;
                     
                     html += `
@@ -709,7 +692,6 @@
             }
         }
 
-        // บันทึกและปรับเปลี่ยนธีมสีหลักและข้อมูลประชาสัมพันธ์ของแคลน
         async function executeSaveClanSettings() {
             const payload = {
                 clan_name: document.getElementById('adm-set-name').value.trim(),
@@ -727,7 +709,6 @@
             }
         }
 
-        // ตรวจสอบเช็คเซสชันประวัติการล็อกอินเดิมเมื่อเปิดแอปพลิเคชันขึ้นมาใหม่เพื่อความรวดเร็วในการแสดงผล
         window.onload = () => {
             const cachedSession = sessionStorage.getItem('sniper_session');
             if (cachedSession) {
