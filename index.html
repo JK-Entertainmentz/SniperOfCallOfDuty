@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sniper Clan - CODM</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (แทนการใช้อิโมจิ) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(56, 189, 248, 0.2);
+            --neon-blue: #38bdf8;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* ป้องกันการเลื่อนหน้าจอที่ไม่ต้องการใน PWA */
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .neon-text {
+            color: var(--neon-blue);
+            text-shadow: 0 0 5px var(--neon-blue), 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--neon-blue);
+            border-radius: 3px;
+        }
+
+        /* Sidebar Item Hover */
+        .sidebar-icon:hover {
+            border-radius: 30%;
+            background-color: var(--neon-blue);
+            color: var(--bg-dark);
+            transition: all 0.3s ease;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .mobile-hide { display: none; }
+        }
+    </style>
+
+    <!-- PWA Dynamic Injection -->
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbx4pnpHdHXpRxc9VAcXslZoUX_6Bw3XZOFuup5ZaEVFBPWrm3qKfSmsBXIU68c0P6qg/exec'; // ใส่ URL ของคุณที่นี่
+        const LOGO_URL = 'https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg';
+
+        // สร้าง manifest.json ไดนามิก
+        const manifestData = {
+            name: "Sniper CODM",
+            short_name: "Sniper",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#0b1120",
+            theme_color: "#38bdf8",
+            icons: [{ src: LOGO_URL, sizes: "512x512", type: "image/jpeg" }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestUrl;
+        document.head.appendChild(link);
+
+        // สร้าง Service Worker ไดนามิก
+        const swCode = `
+            self.addEventListener('install', (e) => { self.skipWaiting(); });
+            self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', (e) => { });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl).then(() => console.log('PWA Ready'));
+        }
+    </script>
+</head>
+<body class="h-screen w-screen flex items-center justify-center">
+
+    <!-- Loading / Toast Overlay -->
+    <div id="toast" class="fixed top-5 right-5 p-4 rounded glass-panel hidden z-50 transition-opacity"></div>
+
+    <!-- Login View -->
+    <div id="login-view" class="w-full max-w-md p-8 glass-panel rounded-2xl flex flex-col items-center">
+        <img src="https://img2.pic.in.th/quality_restoration_25690621115059972.jpeg" alt="Sniper Logo" class="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-[0_0_15px_#38bdf8] mb-6">
+        <h1 class="text-3xl font-bold neon-text mb-6">SNIPER CLAN</h1>
+        
+        <input type="text" id="username" placeholder="Username" class="w-full bg-gray-800 text-white p-3 rounded mb-4 border border-gray-700 focus:border-cyan-400 outline-none transition">
+        <input type="password" id="password" placeholder="Password" class="w-full bg-gray-800 text-white p-3 rounded mb-6 border border-gray-700 focus:border-cyan-400 outline-none transition">
+        
+        <button onclick="login()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-bold p-3 rounded transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+        </button>
+        <div class="mt-4 flex justify-between w-full text-sm text-gray-400">
+            <a href="#" class="hover:text-cyan-400 transition"><i class="fa-solid fa-user-plus"></i> Register</a>
+            <a href="#" class="hover:text-cyan-400 transition"><i class="fa-solid fa-key"></i> Forgot Password?</a>
+        </div>
+    </div>
+
+    <!-- Main App View (Hidden by default) -->
+    <div id="main-view" class="hidden w-full h-full flex">
+        
+        <!-- Sidebar (Discord Style) -->
+        <div class="w-20 bg-gray-900 flex flex-col items-center py-4 border-r border-gray-800 h-full">
+            <div class="sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white transition-all shadow-lg" onclick="switchTab('dashboard')">
+                <i class="fa-solid fa-house"></i>
+            </div>
+            <div class="w-10 h-px bg-gray-700 mb-4"></div>
+            <div class="sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white transition-all" onclick="switchTab('chat')">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <div class="sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center mb-4 cursor-pointer text-xl text-white transition-all" onclick="switchTab('rules')">
+                <i class="fa-solid fa-scroll"></i>
+            </div>
+            <div class="mt-auto sidebar-icon w-12 h-12 rounded-[50%] bg-gray-800 flex items-center justify-center cursor-pointer text-xl text-red-500 transition-all" onclick="logout()">
+                <i class="fa-solid fa-power-off"></i>
+            </div>
+        </div>
+
+        <!-- Secondary Sidebar (Channels/Menu) -->
+        <div class="w-60 glass-panel h-full flex flex-col mobile-hide border-r border-gray-800">
+            <div class="p-4 border-b border-gray-800 font-bold neon-text shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs"></i> SNIPER CLAN
+            </div>
+            <div class="p-2 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="text-xs text-gray-500 uppercase font-bold mb-2 mt-2 px-2">Rooms</div>
+                <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2 mb-1" onclick="loadChat('general')">
+                    <i class="fa-solid fa-hashtag text-gray-500"></i> General
+                </div>
+                <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2" onclick="loadChat('announcements')">
+                    <i class="fa-solid fa-bullhorn text-gray-500"></i> Announcements
+                </div>
+                
+                <div id="admin-menu" class="hidden">
+                    <div class="text-xs text-gray-500 uppercase font-bold mb-2 mt-4 px-2">Admin Panel</div>
+                    <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-cyan-500"></i> Members
+                    </div>
+                    <div class="p-2 rounded hover:bg-gray-700 cursor-pointer text-gray-300 flex items-center gap-2">
+                        <i class="fa-solid fa-gear text-cyan-500"></i> Settings
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-900 border-t border-gray-800 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-gray-900 font-bold">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="text-sm">
+                    <div id="current-username" class="font-bold text-white">User</div>
+                    <div class="text-xs text-green-400 flex items-center gap-1"><i class="fa-solid fa-circle text-[8px]"></i> Online</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 h-full flex flex-col bg-[#0f172a]">
+            <!-- Header -->
+            <div class="h-14 border-b border-gray-800 flex items-center px-4 font-bold text-lg glass-panel gap-2">
+                <i class="fa-solid fa-hashtag text-gray-500"></i> <span id="content-title">Dashboard</span>
+            </div>
+
+            <!-- Dynamic Content Container -->
+            <div id="content-area" class="flex-1 overflow-y-auto custom-scrollbar p-4 relative">
+                <!-- Dashboard Content (Default) -->
+                <div id="dashboard-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="glass-panel p-6 rounded-xl flex items-center justify-between">
+                            <div>
+                                <div class="text-gray-400 text-sm">Total Members</div>
+                                <div class="text-3xl font-bold neon-text" id="stat-members">--</div>
+                            </div>
+                            <i class="fa-solid fa-users text-4xl text-gray-700"></i>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl flex items-center justify-between">
+                            <div>
+                                <div class="text-gray-400 text-sm">Online Now</div>
+                                <div class="text-3xl font-bold text-green-400" id="stat-online">--</div>
+                            </div>
+                            <i class="fa-solid fa-signal text-4xl text-gray-700"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Content -->
+                <div id="chat-content" class="hidden flex flex-col h-full absolute inset-0">
+                    <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col gap-4">
+                        <!-- Messages injected here -->
+                    </div>
+                    <!-- Chat Input -->
+                    <div class="p-4 bg-gray-900 border-t border-gray-800">
+                        <div class="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-2 border border-gray-700 focus-within:border-cyan-400 transition">
+                            <button class="text-gray-400 hover:text-cyan-400 transition"><i class="fa-solid fa-circle-plus"></i></button>
+                            <input type="text" id="chat-input" placeholder="Message #general..." class="flex-1 bg-transparent outline-none text-white px-2">
+                            <button class="text-gray-400 hover:text-cyan-400 transition" title="Icons"><i class="fa-solid fa-icons"></i></button>
+                            <button onclick="sendMessage()" class="text-cyan-500 hover:text-cyan-400 transition"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let currentUser = null;
+        let currentRoom = 'general';
+        let chatInterval = null;
+
+        // Core API Fetch Function
+        async function fetchAPI(data) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'text/plain' }, // ป้องกัน CORS issue ใน GAS
+                    body: JSON.stringify(data)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error("API Error:", error);
+                showToast("Connection Error", "error");
+                return { success: false };
+            }
+        }
+
+        // Login System
+        async function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            if(!user || !pass) return showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "error");
+            
+            const btn = document.querySelector('button');
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Authenticating...';
+            
+            const res = await fetchAPI({ action: 'login', username: user, password: pass });
+            
+            if (res.success) {
+                currentUser = res.user;
+                sessionStorage.setItem('user', JSON.stringify(res.user));
+                document.getElementById('current-username').innerText = currentUser.username;
+                
+                if(['Admin', 'Clan Leader'].includes(currentUser.role)) {
+                    document.getElementById('admin-menu').classList.remove('hidden');
+                }
+                
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('main-view').classList.remove('hidden');
+                switchTab('dashboard');
+                showToast("Welcome back, " + currentUser.username, "success");
+            } else {
+                showToast(res.message || "Login Failed", "error");
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('user');
+            currentUser = null;
+            clearInterval(chatInterval);
+            document.getElementById('main-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.querySelector('button').innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+        }
+
+        // Navigation
+        function switchTab(tab) {
+            document.getElementById('dashboard-content').classList.add('hidden');
+            document.getElementById('chat-content').classList.add('hidden');
+            clearInterval(chatInterval);
+
+            if (tab === 'dashboard') {
+                document.getElementById('content-title').innerText = 'Dashboard';
+                document.getElementById('dashboard-content').classList.remove('hidden');
+                loadDashboardStats();
+            } else if (tab === 'chat') {
+                document.getElementById('chat-content').classList.remove('hidden');
+                loadChat('general');
+            }
+        }
+
+        // Dashboard
+        async function loadDashboardStats() {
+            const res = await fetchAPI({ action: 'get_dashboard' });
+            if(res.success && res.stats) {
+                document.getElementById('stat-members').innerText = res.stats.members || 0;
+                document.getElementById('stat-online').innerText = res.stats.online || 0;
+            }
+        }
+
+        // Chat System
+        async function loadChat(room) {
+            currentRoom = room;
+            document.getElementById('content-title').innerText = room.toUpperCase();
+            document.getElementById('chat-input').placeholder = `Message #${room}...`;
+            
+            clearInterval(chatInterval);
+            fetchMessages(); // โหลดครั้งแรก
+            chatInterval = setInterval(fetchMessages, 2000); // โหลดซ้ำทุก 2 วินาที (Real-time)
+        }
+
+        async function fetchMessages() {
+            const res = await fetchAPI({ action: 'get_chat', room: currentRoom });
+            if (res.success) {
+                const box = document.getElementById('chat-messages');
+                box.innerHTML = ''; // เคลียร์ข้อความเก่า
+                
+                res.messages.forEach(msg => {
+                    const time = new Date(msg.timestamp).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+                    const isMe = msg.sender === currentUser.username;
+                    const html = `
+                        <div class="flex gap-3 hover:bg-gray-800 p-2 rounded transition group">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-cyan-400 font-bold shrink-0">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="font-bold ${isMe ? 'text-cyan-400' : 'text-gray-300'}">${msg.sender}</span>
+                                    <span class="text-xs text-gray-500">${time}</span>
+                                </div>
+                                <div class="text-gray-200 mt-1">${msg.message}</div>
+                            </div>
+                            ${['Admin', 'Moderator'].includes(currentUser.role) ? 
+                                `<button class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition px-2"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        </div>
+                    `;
+                    box.insertAdjacentHTML('beforeend', html);
+                });
+                // เลื่อนลงล่างสุดถ้าจำเป็น
+                // box.scrollTop = box.scrollHeight;
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            input.value = '';
+            await fetchAPI({ action: 'post_chat', room: currentRoom, sender: currentUser.username, message: text });
+            fetchMessages(); // อัปเดตทันทีที่ส่ง
+        }
+
+        // Enter key to send message
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // UI Utils
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation text-red-500' : 'fa-circle-check text-green-500'}"></i> ${msg}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Check Session on Load
+        window.onload = () => {
+            const saved = sessionStorage.getItem('user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                document.getElementById('current-username').innerText = currentUser.username;
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('main-view').classList.remove('hidden');
+                switchTab('dashboard');
+            }
+        }
+    </script>
+</body>
+</html>
